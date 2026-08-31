@@ -1,0 +1,1 @@
+select (payload->>'id')::uuid invoice_id,(payload->>'customerId')::uuid customer_id,(payload->>'amount')::numeric(19,2) amount,payload->>'currency' currency,payload->>'status' status,(payload->>'issuedAt')::timestamptz issued_at from {{ source('bronze','domain_events') }} where domain='invoice' and event_type='InvoiceIssued'

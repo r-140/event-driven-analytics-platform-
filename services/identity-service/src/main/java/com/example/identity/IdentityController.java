@@ -1,0 +1,8 @@
+package com.example.identity;
+import jakarta.validation.Valid; import jakarta.validation.constraints.*; import org.springframework.http.*; import org.springframework.jdbc.core.simple.JdbcClient; import org.springframework.transaction.annotation.Transactional; import org.springframework.web.bind.annotation.*; import tools.jackson.databind.ObjectMapper; import java.net.URI; import java.time.Instant; import java.util.*;
+@RestController @RequestMapping("/api/identities") public class IdentityController {
+ private final JdbcClient db; private final ObjectMapper json; public IdentityController(JdbcClient db,ObjectMapper json){this.db=db;this.json=json;}
+ public record Create(@NotNull UUID customerId,@NotBlank @Email String login){}
+ public record Identity(UUID id,UUID customerId,String login,String status,Instant registeredAt){}
+ @PostMapping @Transactional public ResponseEntity<Identity> create(@Valid @RequestBody Create r) throws Exception {var v=new Identity(UUID.randomUUID(),r.customerId(),r.login().toLowerCase(),"ACTIVE",Instant.now()); db.sql("insert into identities values(:id,:customer,:login,:status,:at)").param("id",v.id()).param("customer",v.customerId()).param("login",v.login()).param("status",v.status()).param("at",v.registeredAt()).update(); db.sql("insert into outbox_events values(:id,'identity',:aggregate,'IdentityRegistered',cast(:payload as jsonb),:at)").param("id",UUID.randomUUID()).param("aggregate",v.id()).param("payload",json.writeValueAsString(v)).param("at",v.registeredAt()).update(); return ResponseEntity.created(URI.create("/api/identities/"+v.id())).body(v);}
+}

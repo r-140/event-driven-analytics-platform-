@@ -1,0 +1,5 @@
+server.port: 8085
+spring:
+  datasource: {url: "${PAYMENT_DB_URL:jdbc:postgresql://localhost:5436/payments}", username: "${DB_USER:platform}", password: "${DB_PASSWORD:platform}"}
+  flyway.enabled: true
+management.endpoints.web.exposure.include: health,info

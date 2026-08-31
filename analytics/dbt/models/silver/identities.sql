@@ -1,0 +1,1 @@
+select (payload->>'id')::uuid identity_id,(payload->>'customerId')::uuid customer_id,lower(payload->>'login') login,payload->>'status' status,(payload->>'registeredAt')::timestamptz registered_at from {{ source('bronze','domain_events') }} where domain='identity'

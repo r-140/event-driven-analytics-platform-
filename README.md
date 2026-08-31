@@ -1,150 +1,93 @@
 # Event-Driven Analytics Platform
 
-A production-like reference implementation of a modern event-driven analytics platform built with Java and Spring Boot.
+A runnable educational reference for moving transactional data into an analytical model without dual writes. It demonstrates hexagonal application code, database-per-service, a transactional outbox, PostgreSQL logical decoding, Debezium, Kafka, idempotent stream processing, Medallion layers, dbt, data quality checks, observability endpoints, and Testcontainers.
 
-The project demonstrates how transactional microservices can evolve into a scalable analytical platform using Change Data Capture (CDC), event streaming, and modern data engineering practices.
+## Implemented scope
 
-The primary goal is educational: to showcase software architecture, data engineering patterns, and production-ready design principles rather than build a business application.
+| Area | Implementation |
+|---|---|
+| Operational APIs | Customer, invoice, invoice-adjustment, payment, and identity services, each with its own PostgreSQL database |
+| Reliable events | Domain write and its outbox row are committed in one local transaction |
+| CDC | One connector per source service routes events to domain topics; invoice and invoice-adjustment both publish to `outbox.event.invoice` |
+| Streaming | Kafka 4 in KRaft mode; consumer group writes idempotently to analytics storage |
+| Analytics | Domain-labelled immutable Bronze events, typed Silver entities, Gold customer and payment summaries |
+| ELT | dbt incremental Silver model, Gold model, schema tests, and a singular quality test |
+| Workload | Configurable customer data generator |
+| Operations | Docker Compose, Actuator health/Prometheus metrics, provisioned Grafana dashboard, helper script, and CI |
+| Testing | MVC/integration tests with a real PostgreSQL Testcontainer |
 
----
+The deliberately similar outbox implementations are retained because topic-per-domain and database-per-service are concepts this repository is meant to demonstrate. A domain is not assumed to equal a service: `invoice-service` emits `InvoiceIssued`, while `invoice-adjustment-service` emits `InvoiceAdjusted`; their independent CDC connectors converge on the Invoice domain topic.
 
-## Project Goals
+## Data flow
 
-* Build production-like Spring Boot microservices
-* Apply Hexagonal Architecture and SOLID principles
-* Demonstrate Database-per-Service architecture
-* Generate realistic operational workloads
-* Introduce Change Data Capture (CDC)
-* Build an event-driven streaming pipeline
-* Design an analytical platform using modern data engineering concepts
-* Implement dimensional data models and ELT pipelines
-* Demonstrate monitoring, testing, and operational best practices
-
----
-
-## Technology Stack
-
-### Backend
-
-* Java 21
-* Spring Boot 3
-* Maven
-* Spring Data JPA
-* Spring Validation
-
-### Database
-
-* PostgreSQL
-* Flyway
-
-### Infrastructure
-
-* Docker
-* Docker Compose
-
-### Testing
-
-* JUnit 5
-* Testcontainers
-
-### Planned Components
-
-* Apache Kafka
-* Kafka Connect
-* Debezium
-* Schema Registry
-* Snowflake
-* dbt
-* Power BI (or equivalent BI tooling)
-
----
-
-## Project Structure
-
-```text
-event-driven-analytics-platform/
-
-├── services/
-│   ├── customer-service/
-│   ├── invoice-service/
-│   ├── payment-service/
-│   ├── identity-service/
-│   └── data-generator/
-│
-├── infrastructure/
-│
-├── docs/
-│
-└── pom.xml
+```mermaid
+flowchart TD
+    API["Customer API"] --> TX["Customer DB + outbox"]
+    TX --> CDC["Debezium Connect"]
+    CDC --> K["Domain topics"]
+    K --> B["Domain-labelled Bronze events"]
+    B --> S["Silver customers"]
+    S --> G["Gold country summary"]
 ```
 
----
+## Quick start
 
-## Development Roadmap
+Requirements: Docker Engine with Compose v2 and `curl`. Host Java/Maven are not required.
 
-### Phase 1 — Operational Platform
+```bash
+chmod +x bin/dev
+./bin/dev up
+./bin/dev register-cdc
+./bin/dev generate 100
+curl http://localhost:8082/api/analytics/customers-by-country
+```
 
-* Multi-module Maven project
-* Spring Boot microservices
-* Hexagonal Architecture
-* REST APIs
-* PostgreSQL
-* Docker Compose
+Grafana is available at <http://localhost:3000> (`admin` / `admin`) with the Customer Analytics dashboard preloaded.
 
-### Phase 2 — Event-Driven Integration
+Connector startup can take several seconds. If registration initially cannot connect, wait until `curl http://localhost:8083/` succeeds and rerun it. Inspect state with:
 
-* Domain events
-* Outbox Pattern
-* Apache Kafka
-* Consumer applications
+```bash
+curl http://localhost:8083/connectors/customer-outbox/status
+./bin/dev health
+./bin/dev logs analytics-service
+```
 
-### Phase 3 — Change Data Capture
+Create one record manually:
 
-* PostgreSQL WAL
-* Debezium
-* Kafka Connect
-* Schema Registry
+```bash
+curl -X POST http://localhost:8081/api/customers \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"ada@example.com","fullName":"Ada Lovelace","countryCode":"GB"}'
+```
 
-### Phase 4 — Analytical Platform
+To demonstrate two source services sharing the Invoice domain topic, create an invoice and then send its returned `id` to the adjustment service:
 
-* Data ingestion
-* Bronze / Silver / Gold architecture
-* ELT pipelines
-* Dimensional modeling
-* Data quality
+```bash
+curl -X POST http://localhost:8087/api/invoice-adjustments \
+  -H 'Content-Type: application/json' \
+  -d '{"invoiceId":"<invoice-id>","amount":10.00,"currency":"EUR","reason":"Demo credit"}'
+```
 
-### Phase 5 — Analytics
+Both `InvoiceIssued` and `InvoiceAdjusted` are available from `outbox.event.invoice`; their `eventType`/`type` headers tell consumers which schema to apply.
 
-* Dashboards
-* Reporting
-* Performance optimization
-* Cost optimization
+Run tests in a Java 25 Maven container with `./bin/dev build`. Testcontainers tests automatically skip when Docker is unavailable.
 
----
+## dbt rebuild path
 
-## Architecture Principles
+The streaming consumer maintains low-latency projections. dbt demonstrates the independently reproducible batch path from Bronze and should be treated as the authoritative transformation definition in a larger platform.
 
-The project follows several architecture principles commonly used in enterprise systems:
+```bash
+cd analytics/dbt
+cp profiles.yml.example profiles.yml
+dbt build --profiles-dir .
+```
 
-* Hexagonal Architecture
-* SOLID principles
-* Domain-Driven Design (selected concepts)
-* Database per Service
-* Event-Driven Architecture
-* Loose Coupling
-* High Cohesion
-* Infrastructure as Code (planned)
+See [architecture and guarantees](docs/architecture.md), [demo guide](docs/demo.md), and [extension exercises](docs/extending-the-platform.md).
 
----
+## Version policy
 
-## Current Status
-
-🚧 Work in progress.
-
-The project is currently focused on building the operational microservices that will later serve as the source of truth for the analytical platform.
-
----
+This greenfield project targets Java 25 LTS and Spring Boot 4.1.x. Pin patch versions for reproducible builds and let Dependabot/Renovate propose upgrades. Java 21 remains a valid deployment baseline when an organization has not certified 25; no project feature requires 25 specifically.
 
 ## License
 
-This project is licensed under the MIT License.
+MIT

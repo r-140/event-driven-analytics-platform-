@@ -1,0 +1,1 @@
+select (payload->>'id')::uuid payment_id,(payload->>'invoiceId')::uuid invoice_id,(payload->>'amount')::numeric(19,2) amount,payload->>'currency' currency,payload->>'status' status,(payload->>'receivedAt')::timestamptz received_at from {{ source('bronze','domain_events') }} where domain='payment'

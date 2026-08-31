@@ -1,0 +1,12 @@
+server.port: 8081
+spring:
+  application.name: customer-service
+  datasource:
+    url: ${CUSTOMER_DB_URL:jdbc:postgresql://localhost:5433/customers}
+    username: ${CUSTOMER_DB_USER:platform}
+    password: ${CUSTOMER_DB_PASSWORD:platform}
+  jpa:
+    open-in-view: false
+    hibernate.ddl-auto: validate
+  flyway.enabled: true
+management.endpoints.web.exposure.include: health,info,prometheus

@@ -1,0 +1,6 @@
+server.port: 8087
+spring:
+  application.name: invoice-adjustment-service
+  datasource: {url: "${INVOICE_ADJUSTMENT_DB_URL:jdbc:postgresql://localhost:5438/invoice_adjustments}", username: "${DB_USER:platform}", password: "${DB_PASSWORD:platform}"}
+  flyway.enabled: true
+management.endpoints.web.exposure.include: health,info

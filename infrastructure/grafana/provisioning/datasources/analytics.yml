@@ -1,0 +1,9 @@
+apiVersion: 1
+datasources:
+  - name: Analytics PostgreSQL
+    uid: analytics-postgres
+    type: postgres
+    url: analytics-db:5432
+    user: platform
+    secureJsonData: {password: platform}
+    jsonData: {database: analytics, sslmode: disable, postgresVersion: 1700}

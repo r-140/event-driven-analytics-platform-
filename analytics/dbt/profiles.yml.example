@@ -1,0 +1,12 @@
+event_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: localhost
+      port: 5434
+      user: platform
+      password: platform
+      dbname: analytics
+      schema: public
+      threads: 4

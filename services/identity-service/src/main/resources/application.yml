@@ -1,0 +1,5 @@
+server.port: 8086
+spring:
+  datasource: {url: "${IDENTITY_DB_URL:jdbc:postgresql://localhost:5437/identities}", username: "${DB_USER:platform}", password: "${DB_PASSWORD:platform}"}
+  flyway.enabled: true
+management.endpoints.web.exposure.include: health,info

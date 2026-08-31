@@ -1,0 +1,9 @@
+package com.example.invoice;
+import jakarta.validation.Valid; import jakarta.validation.constraints.*; import org.springframework.http.*; import org.springframework.jdbc.core.simple.JdbcClient; import org.springframework.transaction.annotation.Transactional; import org.springframework.web.bind.annotation.*; import tools.jackson.databind.ObjectMapper; import java.math.BigDecimal; import java.net.URI; import java.time.Instant; import java.util.*;
+@RestController @RequestMapping("/api/invoices") public class InvoiceController {
+ private final JdbcClient db; private final ObjectMapper json; public InvoiceController(JdbcClient db,ObjectMapper json){this.db=db;this.json=json;}
+ public record Create(@NotNull UUID customerId,@NotNull @DecimalMin("0.01") BigDecimal amount,@NotBlank @Pattern(regexp="[A-Z]{3}") String currency){}
+ public record Invoice(UUID id,UUID customerId,BigDecimal amount,String currency,String status,Instant issuedAt){}
+ @PostMapping @Transactional public ResponseEntity<Invoice> create(@Valid @RequestBody Create r) throws Exception {var v=new Invoice(UUID.randomUUID(),r.customerId(),r.amount(),r.currency(),"ISSUED",Instant.now()); db.sql("insert into invoices values(:id,:customer,:amount,:currency,:status,:at)").param("id",v.id()).param("customer",v.customerId()).param("amount",v.amount()).param("currency",v.currency()).param("status",v.status()).param("at",v.issuedAt()).update(); outbox(v); return ResponseEntity.created(URI.create("/api/invoices/"+v.id())).body(v);}
+ private void outbox(Invoice v) throws Exception {db.sql("insert into outbox_events values(:id,'invoice',:aggregate,'InvoiceIssued',cast(:payload as jsonb),:at)").param("id",UUID.randomUUID()).param("aggregate",v.id()).param("payload",json.writeValueAsString(v)).param("at",v.issuedAt()).update();}
+}

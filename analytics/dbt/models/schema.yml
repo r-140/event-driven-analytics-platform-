@@ -1,0 +1,15 @@
+version: 2
+models:
+  - name: customers
+    description: One validated row per customer, derived from immutable Bronze events.
+    columns:
+      - name: customer_id
+        tests: [not_null, unique]
+      - name: email
+        tests: [not_null, unique]
+      - name: country_code
+        tests: [not_null]
+  - name: customer_summary
+    columns:
+      - name: country_code
+        tests: [not_null, unique]

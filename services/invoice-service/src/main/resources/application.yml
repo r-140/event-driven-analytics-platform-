@@ -1,0 +1,5 @@
+server.port: 8084
+spring:
+  datasource: {url: "${INVOICE_DB_URL:jdbc:postgresql://localhost:5435/invoices}", username: "${DB_USER:platform}", password: "${DB_PASSWORD:platform}"}
+  flyway.enabled: true
+management.endpoints.web.exposure.include: health,info

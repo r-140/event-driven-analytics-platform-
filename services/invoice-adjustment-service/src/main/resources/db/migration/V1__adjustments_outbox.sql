@@ -1,0 +1,2 @@
+create table invoice_adjustments(id uuid primary key,invoice_id uuid not null,amount numeric(19,2) not null,currency varchar(3) not null,reason varchar(500) not null,adjusted_at timestamptz not null);
+create table outbox_events(id uuid primary key,aggregate_type varchar(100) not null,aggregate_id uuid not null,event_type varchar(100) not null,payload jsonb not null,occurred_at timestamptz not null);

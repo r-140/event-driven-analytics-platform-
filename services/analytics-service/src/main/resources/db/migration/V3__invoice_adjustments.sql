@@ -1,0 +1,2 @@
+create table silver.invoice_adjustments(adjustment_id uuid primary key,invoice_id uuid not null,amount numeric(19,2) not null,currency varchar(3) not null,reason varchar(500) not null,adjusted_at timestamptz not null);
+create table gold.invoice_net_amount(invoice_id uuid primary key,issued_amount numeric(19,2) not null,adjusted_amount numeric(19,2) not null,net_amount numeric(19,2) not null,refreshed_at timestamptz not null);

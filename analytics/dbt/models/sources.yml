@@ -1,0 +1,13 @@
+version: 2
+sources:
+  - name: bronze
+    schema: bronze
+    tables:
+      - name: customer_events
+        columns:
+          - name: event_id
+            tests: [not_null, unique]
+      - name: domain_events
+        columns:
+          - name: event_id
+            tests: [not_null, unique]
