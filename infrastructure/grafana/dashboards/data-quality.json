@@ -1,0 +1,10 @@
+{
+  "uid":"data-quality","title":"Freshness & Anomaly Detection","schemaVersion":41,"version":1,"refresh":"30s","time":{"from":"now-24h","to":"now"},
+  "panels":[
+    {"id":1,"type":"stat","title":"Active anomalies","datasource":{"type":"postgres","uid":"analytics-postgres"},"targets":[{"refId":"A","format":"table","rawSql":"select count(*) value from observability.anomaly_events where resolved_at is null"}],"gridPos":{"h":6,"w":6,"x":0,"y":0}},
+    {"id":2,"type":"stat","title":"Datasets beyond SLA","datasource":{"type":"postgres","uid":"analytics-postgres"},"targets":[{"refId":"A","format":"table","rawSql":"select count(*) value from (select distinct on(dataset_name) status from observability.freshness_history order by dataset_name,observed_at desc) s where status='stale'"}],"gridPos":{"h":6,"w":6,"x":6,"y":0}},
+    {"id":3,"type":"table","title":"Current dataset freshness","datasource":{"type":"postgres","uid":"analytics-postgres"},"targets":[{"refId":"A","format":"table","rawSql":"select distinct on(dataset_name) dataset_name,layer,last_record_at,round(age_minutes,1) age_minutes,sla_minutes,status,row_count,round(volume_change_pct,1) volume_change_pct from observability.freshness_history order by dataset_name,observed_at desc"}],"gridPos":{"h":9,"w":12,"x":12,"y":0}},
+    {"id":4,"type":"timeseries","title":"Freshness age vs SLA","fieldConfig":{"defaults":{"unit":"m"}},"datasource":{"type":"postgres","uid":"analytics-postgres"},"targets":[{"refId":"A","format":"time_series","rawSql":"select observed_at time,age_minutes value,dataset_name metric from observability.freshness_history where $__timeFilter(observed_at) order by observed_at"}],"gridPos":{"h":9,"w":12,"x":0,"y":9}},
+    {"id":5,"type":"table","title":"Active anomaly details","datasource":{"type":"postgres","uid":"analytics-postgres"},"targets":[{"refId":"A","format":"table","rawSql":"select severity,anomaly_type,dataset_name,detected_at,details from observability.anomaly_events where resolved_at is null order by case severity when 'critical' then 1 else 2 end,detected_at desc"}],"gridPos":{"h":9,"w":12,"x":12,"y":9}}
+  ]
+}

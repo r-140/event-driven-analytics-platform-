@@ -1,0 +1,11 @@
+{
+  "uid":"kafka-overview","title":"Kafka Overview","schemaVersion":41,"version":1,"refresh":"15s","time":{"from":"now-6h","to":"now"},
+  "panels":[
+    {"id":1,"type":"stat","title":"Brokers","datasource":{"type":"prometheus","uid":"prometheus"},"targets":[{"refId":"A","expr":"kafka_brokers"}],"gridPos":{"h":6,"w":6,"x":0,"y":0}},
+    {"id":2,"type":"stat","title":"Topic partitions","datasource":{"type":"prometheus","uid":"prometheus"},"targets":[{"refId":"A","expr":"sum(kafka_topic_partitions)"}],"gridPos":{"h":6,"w":6,"x":6,"y":0}},
+    {"id":3,"type":"stat","title":"Total consumer lag","datasource":{"type":"prometheus","uid":"prometheus"},"targets":[{"refId":"A","expr":"sum(kafka_consumergroup_lag)"}],"gridPos":{"h":6,"w":6,"x":12,"y":0}},
+    {"id":4,"type":"stat","title":"Partitions without leader","datasource":{"type":"prometheus","uid":"prometheus"},"targets":[{"refId":"A","expr":"sum(kafka_topic_partition_leader < 0)"}],"gridPos":{"h":6,"w":6,"x":18,"y":0}},
+    {"id":5,"type":"timeseries","title":"Consumer lag by group and topic","datasource":{"type":"prometheus","uid":"prometheus"},"targets":[{"refId":"A","expr":"sum by(consumergroup,topic) (kafka_consumergroup_lag)","legendFormat":"{{consumergroup}} / {{topic}}"}],"gridPos":{"h":9,"w":12,"x":0,"y":6}},
+    {"id":6,"type":"timeseries","title":"Records produced per second","datasource":{"type":"prometheus","uid":"prometheus"},"targets":[{"refId":"A","expr":"sum by(topic) (rate(kafka_topic_partition_current_offset[5m]))","legendFormat":"{{topic}}"}],"gridPos":{"h":9,"w":12,"x":12,"y":6}}
+  ]
+}

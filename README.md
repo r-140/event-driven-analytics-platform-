@@ -13,7 +13,7 @@ A runnable educational reference for moving transactional data into an analytica
 | Analytics | Domain-labelled immutable Bronze events, typed Silver entities, Gold customer and payment summaries |
 | ELT | dbt incremental Silver model, Gold model, schema tests, and a singular quality test |
 | Workload | Configurable customer data generator |
-| Operations | Docker Compose, Actuator health/Prometheus metrics, provisioned Grafana dashboard, helper script, and CI |
+| Operations | Airflow-orchestrated dbt, Prometheus/Kafka exporter, six provisioned Grafana dashboards, anomaly detection, helper script, and CI |
 | Testing | MVC/integration tests with a real PostgreSQL Testcontainer |
 
 The deliberately similar outbox implementations are retained because topic-per-domain and database-per-service are concepts this repository is meant to demonstrate. A domain is not assumed to equal a service: `invoice-service` emits `InvoiceIssued`, while `invoice-adjustment-service` emits `InvoiceAdjusted`; their independent CDC connectors converge on the Invoice domain topic.
@@ -42,7 +42,7 @@ chmod +x bin/dev
 curl http://localhost:8082/api/analytics/customers-by-country
 ```
 
-Grafana is available at <http://localhost:3000> (`admin` / `admin`) with the Customer Analytics dashboard preloaded.
+Grafana is available at <http://localhost:3000> (`admin` / `admin`) with Customer, Kafka, CDC, Airflow, dbt, and data-quality dashboards preloaded. Airflow is at <http://localhost:8080>; obtain the standalone credentials with `docker compose logs airflow`.
 
 Connector startup can take several seconds. If registration initially cannot connect, wait until `curl http://localhost:8083/` succeeds and rerun it. Inspect state with:
 
@@ -82,7 +82,7 @@ cp profiles.yml.example profiles.yml
 dbt build --profiles-dir .
 ```
 
-See [architecture and guarantees](docs/architecture.md), [demo guide](docs/demo.md), [data-platform CI/CD](docs/cicd.md), and [extension exercises](docs/extending-the-platform.md).
+See [architecture and guarantees](docs/architecture.md), [demo guide](docs/demo.md), [observability and anomaly detection](docs/observability.md), [data-platform CI/CD](docs/cicd.md), and [extension exercises](docs/extending-the-platform.md).
 
 ## Version policy
 

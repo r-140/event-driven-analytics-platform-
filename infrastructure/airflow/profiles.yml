@@ -1,0 +1,12 @@
+event_analytics:
+  target: airflow
+  outputs:
+    airflow:
+      type: postgres
+      host: analytics-db
+      port: 5432
+      user: platform
+      password: platform
+      dbname: analytics
+      schema: public
+      threads: 4

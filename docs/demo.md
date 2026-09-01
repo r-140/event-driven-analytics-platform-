@@ -7,6 +7,9 @@
 5. Re-run a Kafka record and show that the Bronze primary key prevents double counting.
 6. Run `dbt build` and introduce an invalid country code directly in Bronze to demonstrate the singular data-quality test.
 7. Stop the analytics service, generate events, restart it, and show consumer-group catch-up.
+8. Open Airflow and trigger `dbt_analytics`; inspect the run and model-level results on the dbt dashboard.
+9. Stop `invoice-adjustment-service` or pause its connector, wait for `platform_health`, and show the connector/freshness anomaly in Grafana.
+10. Leave generation stopped for more than 10 minutes to demonstrate CDC freshness-SLA breaches, then generate records and show automatic anomaly resolution.
 
 Useful database shells:
 

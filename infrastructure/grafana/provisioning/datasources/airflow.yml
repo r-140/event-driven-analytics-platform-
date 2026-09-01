@@ -1,0 +1,9 @@
+apiVersion: 1
+datasources:
+  - name: Airflow Metadata
+    uid: airflow-postgres
+    type: postgres
+    url: airflow-db:5432
+    user: airflow
+    secureJsonData: {password: airflow}
+    jsonData: {database: airflow, sslmode: disable, postgresVersion: 1700}
