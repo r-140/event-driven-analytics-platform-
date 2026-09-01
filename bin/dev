@@ -5,9 +5,35 @@ cd "$ROOT"
 case "${1:-help}" in
   build) docker run --rm -v "$ROOT:/workspace" -w /workspace maven:3.9-eclipse-temurin-25 mvn verify ;;
   up) docker compose up -d --build customer-db invoice-db invoice-adjustment-db payment-db identity-db analytics-db kafka connect kafka-exporter prometheus customer-service invoice-service invoice-adjustment-service payment-service identity-service analytics-service semantic-query-service analytics-portal grafana airflow ;;
-  register-cdc) for source in customer invoice invoice-adjustment payment identity; do curl --fail --silent --show-error -X POST http://localhost:8083/connectors -H 'Content-Type: application/json' --data @"infrastructure/debezium/register-${source}-outbox.json"; echo; done ;;
-  generate) docker compose run --rm -e CUSTOMER_SERVICE_URL=http://customer-service:8081 -e EVENT_COUNT="${2:-100}" --build data-generator ;;
-  health) for port in 8081 8082 8084 8085 8086 8087 8088; do curl --fail "http://localhost:${port}/actuator/health"; echo; done ;;
+  register-cdc) for attempt in {1..60}; do curl --fail --silent http://localhost:8083/connectors >/dev/null && break; sleep 2; done; curl --fail --silent http://localhost:8083/connectors >/dev/null || { echo "Kafka Connect is not ready" >&2; exit 1; }; for source in customer invoice invoice-adjustment payment identity; do name="${source}-outbox"; if curl --fail --silent "http://localhost:8083/connectors/${name}" >/dev/null; then echo "${name} already registered"; else curl --fail --silent --show-error -X POST http://localhost:8083/connectors -H 'Content-Type: application/json' --data @"infrastructure/debezium/register-${source}-outbox.json"; echo; fi; done ;;
+  generate)
+    ready=false
+    for attempt in {1..60}; do
+      if "$0" health >/dev/null 2>&1; then ready=true; break; fi
+      sleep 2
+    done
+    if [[ "$ready" != true ]]; then
+      echo "Application services did not become healthy within 120 seconds." >&2
+      echo "Container state:" >&2
+      docker compose ps --all >&2
+      echo "Recent application logs:" >&2
+      docker compose logs --tail=80 customer-service invoice-service invoice-adjustment-service payment-service identity-service analytics-service semantic-query-service >&2
+      exit 1
+    fi
+    docker compose run --rm -e CUSTOMER_SERVICE_URL=http://customer-service:8081 -e EVENT_COUNT="${2:-100}" --build data-generator
+    ;;
+  health)
+    for endpoint in \
+      customer-service:8081 analytics-service:8082 invoice-service:8084 \
+      payment-service:8085 identity-service:8086 invoice-adjustment-service:8087 \
+      semantic-query-service:8088; do
+      service="${endpoint%%:*}"
+      port="${endpoint##*:}"
+      curl --fail --silent --show-error "http://localhost:${port}/actuator/health" \
+        || { echo "${service} is not healthy on port ${port}" >&2; exit 1; }
+      echo
+    done
+    ;;
   down) docker compose down ;;
   reset) docker compose down --volumes ;;
   logs) docker compose logs -f "${2:-}" ;;

@@ -84,7 +84,7 @@ cp profiles.yml.example profiles.yml
 dbt build --profiles-dir .
 ```
 
-See [architecture and guarantees](docs/architecture.md), [demo guide](docs/demo.md), [semantic layer](docs/semantic-layer.md), [observability and anomaly detection](docs/observability.md), [data-platform CI/CD](docs/cicd.md), and [extension exercises](docs/extending-the-platform.md).
+See [architecture and guarantees](docs/architecture.md), [schema evolution](docs/schema-evolution.md), [demo guide](docs/demo.md), [semantic layer](docs/semantic-layer.md), [observability and anomaly detection](docs/observability.md), [data-platform CI/CD](docs/cicd.md), and [extension exercises](docs/extending-the-platform.md).
 
 ## Version policy
 
