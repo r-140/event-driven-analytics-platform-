@@ -10,6 +10,7 @@
 8. Open Airflow and trigger `dbt_analytics`; inspect the run and model-level results on the dbt dashboard.
 9. Stop `invoice-adjustment-service` or pause its connector, wait for `platform_health`, and show the connector/freshness anomaly in Grafana.
 10. Leave generation stopped for more than 10 minutes to demonstrate CDC freshness-SLA breaches, then generate records and show automatic anomaly resolution.
+11. Trigger `dbt_analytics`, then open `http://localhost:8090`. Run Customers by country and Invoice value by month; inspect the semantic request and generated parameterized SQL.
 
 Useful database shells:
 

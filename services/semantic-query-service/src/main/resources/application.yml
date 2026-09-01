@@ -1,0 +1,15 @@
+server.port: 8088
+spring:
+  application.name: semantic-query-service
+  datasource:
+    url: ${SEMANTIC_DB_URL:jdbc:postgresql://localhost:5434/analytics}
+    username: ${SEMANTIC_DB_USER:platform}
+    password: ${SEMANTIC_DB_PASSWORD:platform}
+    hikari:
+      read-only: true
+      maximum-pool-size: 5
+      connection-timeout: 3000
+management.endpoints.web.exposure.include: health,info,prometheus
+semantic:
+  query-timeout-seconds: 10
+  max-rows: 5000

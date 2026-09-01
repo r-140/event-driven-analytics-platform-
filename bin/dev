@@ -4,10 +4,10 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 case "${1:-help}" in
   build) docker run --rm -v "$ROOT:/workspace" -w /workspace maven:3.9-eclipse-temurin-25 mvn verify ;;
-  up) docker compose up -d --build customer-db invoice-db invoice-adjustment-db payment-db identity-db analytics-db kafka connect kafka-exporter prometheus customer-service invoice-service invoice-adjustment-service payment-service identity-service analytics-service grafana airflow ;;
+  up) docker compose up -d --build customer-db invoice-db invoice-adjustment-db payment-db identity-db analytics-db kafka connect kafka-exporter prometheus customer-service invoice-service invoice-adjustment-service payment-service identity-service analytics-service semantic-query-service analytics-portal grafana airflow ;;
   register-cdc) for source in customer invoice invoice-adjustment payment identity; do curl --fail --silent --show-error -X POST http://localhost:8083/connectors -H 'Content-Type: application/json' --data @"infrastructure/debezium/register-${source}-outbox.json"; echo; done ;;
   generate) docker compose run --rm -e CUSTOMER_SERVICE_URL=http://customer-service:8081 -e EVENT_COUNT="${2:-100}" --build data-generator ;;
-  health) for port in 8081 8082 8084 8085 8086 8087; do curl --fail "http://localhost:${port}/actuator/health"; echo; done ;;
+  health) for port in 8081 8082 8084 8085 8086 8087 8088; do curl --fail "http://localhost:${port}/actuator/health"; echo; done ;;
   down) docker compose down ;;
   reset) docker compose down --volumes ;;
   logs) docker compose logs -f "${2:-}" ;;

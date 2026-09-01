@@ -11,6 +11,7 @@ A runnable educational reference for moving transactional data into an analytica
 | CDC | One connector per source service routes events to domain topics; invoice and invoice-adjustment both publish to `outbox.event.invoice` |
 | Streaming | Kafka 4 in KRaft mode; consumer group writes idempotently to analytics storage |
 | Analytics | Domain-labelled immutable Bronze events, typed Silver entities, Gold customer and payment summaries |
+| Semantic reporting | Catalog-driven Spring query compiler and React report explorer over row-grain Gold facts |
 | ELT | dbt incremental Silver model, Gold model, schema tests, and a singular quality test |
 | Workload | Configurable customer data generator |
 | Operations | Airflow-orchestrated dbt, Prometheus/Kafka exporter, six provisioned Grafana dashboards, anomaly detection, helper script, and CI |
@@ -39,10 +40,11 @@ chmod +x bin/dev
 ./bin/dev up
 ./bin/dev register-cdc
 ./bin/dev generate 100
+docker compose exec airflow airflow dags trigger dbt_analytics
 curl http://localhost:8082/api/analytics/customers-by-country
 ```
 
-Grafana is available at <http://localhost:3000> (`admin` / `admin`) with Customer, Kafka, CDC, Airflow, dbt, and data-quality dashboards preloaded. Airflow is at <http://localhost:8080>; obtain the standalone credentials with `docker compose logs airflow`.
+The business analytics portal is available at <http://localhost:8090>. Grafana remains observability-only at <http://localhost:3000> (`admin` / `admin`) with Kafka, CDC, Airflow, dbt, data-quality, and semantic-service dashboards. Airflow is at <http://localhost:8080>; obtain the standalone credentials with `docker compose logs airflow`.
 
 Connector startup can take several seconds. If registration initially cannot connect, wait until `curl http://localhost:8083/` succeeds and rerun it. Inspect state with:
 
@@ -82,7 +84,7 @@ cp profiles.yml.example profiles.yml
 dbt build --profiles-dir .
 ```
 
-See [architecture and guarantees](docs/architecture.md), [demo guide](docs/demo.md), [observability and anomaly detection](docs/observability.md), [data-platform CI/CD](docs/cicd.md), and [extension exercises](docs/extending-the-platform.md).
+See [architecture and guarantees](docs/architecture.md), [demo guide](docs/demo.md), [semantic layer](docs/semantic-layer.md), [observability and anomaly detection](docs/observability.md), [data-platform CI/CD](docs/cicd.md), and [extension exercises](docs/extending-the-platform.md).
 
 ## Version policy
 

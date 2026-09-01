@@ -13,3 +13,15 @@ models:
     columns:
       - name: country_code
         tests: [not_null, unique]
+  - name: customer_facts
+    columns:
+      - name: customer_id
+        tests: [not_null, unique]
+  - name: invoice_facts
+    columns:
+      - name: invoice_id
+        tests: [not_null, unique]
+  - name: payment_facts
+    columns:
+      - name: payment_id
+        tests: [not_null, unique]

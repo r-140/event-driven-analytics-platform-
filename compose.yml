@@ -94,6 +94,15 @@ services:
     depends_on: {analytics-db: {condition: service_healthy}, kafka: {condition: service_started}}
     environment: {ANALYTICS_DB_URL: jdbc:postgresql://analytics-db:5432/analytics, KAFKA_BOOTSTRAP_SERVERS: kafka:29092}
     ports: ["8082:8082"]
+  semantic-query-service:
+    build: {context: ., args: {MODULE: semantic-query-service}}
+    depends_on: {analytics-db: {condition: service_healthy}}
+    environment: {SEMANTIC_DB_URL: jdbc:postgresql://analytics-db:5432/analytics}
+    ports: ["8088:8088"]
+  analytics-portal:
+    build: {context: apps/analytics-portal}
+    depends_on: [semantic-query-service]
+    ports: ["8090:80"]
   data-generator:
     profiles: [tools]
     build: {context: ., args: {MODULE: data-generator}}

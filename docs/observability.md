@@ -17,12 +17,12 @@ For the initial Airflow standalone credentials, inspect `docker compose logs air
 
 | Dashboard | Important signals |
 |---|---|
-| Customer Analytics | Business-level customer counts |
 | Kafka Overview | Broker availability, partitions, leader loss, throughput and consumer lag |
 | CDC Overview | Connector/task state and stale CDC datasets |
 | Airflow Overview | DAG error rate, task median/p95, retries, duration and recent failures |
 | dbt & Airflow Operations | dbt run median/p95, error rate, duration and models ranked by seven-day failures |
 | Freshness & Anomaly Detection | SLA breaches, last record time, volume shifts and unresolved anomalies |
+| Semantic Query Service | Query rate, error rate, p95 latency, returned rows and model-level traffic |
 
 ## Detection rules
 
