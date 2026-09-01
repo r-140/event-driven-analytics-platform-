@@ -1,3 +1,4 @@
+{{ config(unique_key='customer_id') }}
 select
   aggregate_id as customer_id,
   lower(payload ->> 'email') as email,

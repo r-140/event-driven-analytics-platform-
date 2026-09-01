@@ -82,7 +82,7 @@ cp profiles.yml.example profiles.yml
 dbt build --profiles-dir .
 ```
 
-See [architecture and guarantees](docs/architecture.md), [demo guide](docs/demo.md), and [extension exercises](docs/extending-the-platform.md).
+See [architecture and guarantees](docs/architecture.md), [demo guide](docs/demo.md), [data-platform CI/CD](docs/cicd.md), and [extension exercises](docs/extending-the-platform.md).
 
 ## Version policy
 
