@@ -7,6 +7,7 @@ import psycopg
 
 DB=os.environ.get("ANALYTICS_DATABASE_URL","postgresql://platform:platform@analytics-db:5432/analytics")
 PROJECT=Path("/opt/platform/analytics/dbt")
+TARGET=Path(os.environ.get("DBT_TARGET_PATH","/tmp/dbt-target"))
 
 @dag(dag_id="dbt_analytics",schedule="*/5 * * * *",start_date=datetime(2026,1,1),catchup=False,is_paused_upon_creation=False,tags=["dbt","analytics"])
 def dbt_analytics():
@@ -14,7 +15,7 @@ def dbt_analytics():
  def build():
   run_id=uuid.uuid4(); started=datetime.now(timezone.utc); tick=time.monotonic(); error=None
   result=subprocess.run(["dbt","build","--profiles-dir","/opt/airflow/dbt-profile","--target","airflow"],cwd=PROJECT,text=True,capture_output=True)
-  finished=datetime.now(timezone.utc); artifact=PROJECT/"target/run_results.json"; rows=[]
+  finished=datetime.now(timezone.utc); artifact=TARGET/"run_results.json"; rows=[]
   if artifact.exists():
    for item in json.loads(artifact.read_text()).get("results",[]):
     rows.append((run_id,item.get("unique_id","unknown"),item.get("status","unknown"),item.get("execution_time",0),finished,item.get("message")))

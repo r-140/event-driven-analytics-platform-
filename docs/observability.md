@@ -28,6 +28,41 @@ For the initial Airflow standalone credentials, inspect `docker compose logs air
 
 The `platform_health` DAG runs every minute. It polls every Kafka Connect connector and checks freshness for each CDC source stream and selected dbt models. Default demo SLAs are 10 minutes for CDC and 15 minutes for models.
 
+## Why a dashboard can show `No data`
+
+The dashboards are intentionally driven by different pipelines:
+
+| Dashboard | Starts showing data after |
+|---|---|
+| Kafka | Kafka exporter is running and Prometheus has completed a scrape |
+| CDC | Connectors are registered and `platform_health` has completed |
+| Freshness & Anomaly Detection | Analytics migrations have run and `platform_health` has completed |
+| dbt & Airflow Operations | At least one `dbt_analytics` run has completed |
+| Semantic Query Service | At least one report has been executed in the analytics portal |
+| Airflow Overview | Airflow has created DAG/task-run metadata |
+
+`No data` is different from a valid zero. It normally means that the underlying metric series or SQL history row does not exist yet. After startup, use this sequence:
+
+```bash
+./bin/dev health
+./bin/dev register-cdc
+./bin/dev generate 100
+docker compose exec airflow airflow dags trigger dbt_analytics
+docker compose exec airflow airflow dags trigger platform_health
+```
+
+Wait for both DAG runs to finish, then run at least one report at <http://localhost:8090>. Prometheus targets can be checked at <http://localhost:9090/targets>.
+
+If all non-Airflow dashboards are empty, first check application migrations and ingestion rather than Grafana itself:
+
+```bash
+docker compose ps --all
+docker compose logs customer-service analytics-service kafka-exporter prometheus
+curl -fsS http://localhost:9090/api/v1/query?query=kafka_brokers
+```
+
+The repository is mounted read-only in the Airflow container. dbt writes compiled SQL, `run_results.json`, and its log to the writable, ephemeral paths `/tmp/dbt-target` and `/tmp/dbt-logs`. `DBT_TARGET_PATH` and `DBT_LOG_PATH` configure those locations, and the DAG reads run metadata from the configured target path.
+
 It creates or resolves anomaly records for:
 
 - connector or connector-task failure;

@@ -4,6 +4,8 @@ config-version: 2
 profile: event_analytics
 model-paths: ["models"]
 test-paths: ["tests"]
+target-path: "{{ env_var('DBT_TARGET_PATH', 'target') }}"
+log-path: "{{ env_var('DBT_LOG_PATH', 'logs') }}"
 models:
   event_analytics:
     silver: {+schema: silver_dbt, +materialized: incremental}

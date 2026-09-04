@@ -23,7 +23,7 @@ public class CustomerApplicationService implements CustomerUseCases.Service {
     public Customer create(String email, String name, String country) {
         var customer = repository.save(Customer.create(email, name, country));
         jdbc.sql("insert into outbox_events(id,aggregate_type,aggregate_id,event_type,payload,occurred_at) values (:id,'customer',:aggregateId,'CustomerCreated',cast(:payload as jsonb),:at)")
-            .param("id", UUID.randomUUID()).param("aggregateId", customer.id()).param("payload", payload(customer)).param("at", Instant.now()).update();
+            .param("id", UUID.randomUUID()).param("aggregateId", customer.id()).param("payload", payload(customer)).param("at", java.sql.Timestamp.from(Instant.now())).update();
         return customer;
     }
     @Override public Optional<Customer> get(UUID id) { return repository.findById(id); }

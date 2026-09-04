@@ -40,8 +40,31 @@ chmod +x bin/dev
 ./bin/dev up
 ./bin/dev register-cdc
 ./bin/dev generate 100
+```
+
+The REST endpoint below verifies the **streaming path**. The Kafka consumer maintains this Gold projection independently of dbt:
+
+```bash
+curl -s http://localhost:8082/api/analytics/customers-by-country
+```
+
+Airflow triggering is asynchronous. Trigger both data-platform DAGs, then wait until their runs show `success` before using the dbt, CDC, or data-quality dashboards:
+
+```bash
 docker compose exec airflow airflow dags trigger dbt_analytics
-curl http://localhost:8082/api/analytics/customers-by-country
+docker compose exec airflow airflow dags trigger platform_health
+
+docker compose exec airflow airflow dags list-runs dbt_analytics
+docker compose exec airflow airflow dags list-runs platform_health
+```
+
+If `dbt_analytics` reports `failed`, run the same build interactively to expose the complete dbt error:
+
+```bash
+docker compose exec airflow bash -lc '
+  cd /opt/platform/analytics/dbt &&
+  dbt build --profiles-dir /opt/airflow/dbt-profile --target airflow
+'
 ```
 
 The business analytics portal is available at <http://localhost:8090>. Grafana remains observability-only at <http://localhost:3000> (`admin` / `admin`) with Kafka, CDC, Airflow, dbt, data-quality, and semantic-service dashboards. Airflow is at <http://localhost:8080>; obtain the standalone credentials with `docker compose logs airflow`.

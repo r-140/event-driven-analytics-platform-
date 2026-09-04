@@ -53,6 +53,7 @@ services:
     image: danielqsj/kafka-exporter:v1.9.0
     command: ["--kafka.server=kafka:29092"]
     depends_on: [kafka]
+    restart: on-failure
     ports: ["9308:9308"]
   prometheus:
     image: prom/prometheus:v3.13.2
@@ -130,6 +131,8 @@ services:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-db:5432/airflow
       ANALYTICS_DATABASE_URL: postgresql://platform:platform@analytics-db:5432/analytics
       KAFKA_CONNECT_URL: http://connect:8083
+      DBT_TARGET_PATH: /tmp/dbt-target
+      DBT_LOG_PATH: /tmp/dbt-logs
     volumes:
       - ./infrastructure/airflow/dags:/opt/airflow/dags:ro
       - ./infrastructure/airflow/profiles.yml:/opt/airflow/dbt-profile/profiles.yml:ro

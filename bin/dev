@@ -4,8 +4,45 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 case "${1:-help}" in
   build) docker run --rm -v "$ROOT:/workspace" -w /workspace maven:3.9-eclipse-temurin-25 mvn verify ;;
-  up) docker compose up -d --build customer-db invoice-db invoice-adjustment-db payment-db identity-db analytics-db kafka connect kafka-exporter prometheus customer-service invoice-service invoice-adjustment-service payment-service identity-service analytics-service semantic-query-service analytics-portal grafana airflow ;;
-  register-cdc) for attempt in {1..60}; do curl --fail --silent http://localhost:8083/connectors >/dev/null && break; sleep 2; done; curl --fail --silent http://localhost:8083/connectors >/dev/null || { echo "Kafka Connect is not ready" >&2; exit 1; }; for source in customer invoice invoice-adjustment payment identity; do name="${source}-outbox"; if curl --fail --silent "http://localhost:8083/connectors/${name}" >/dev/null; then echo "${name} already registered"; else curl --fail --silent --show-error -X POST http://localhost:8083/connectors -H 'Content-Type: application/json' --data @"infrastructure/debezium/register-${source}-outbox.json"; echo; fi; done ;;
+  up)
+    docker compose up -d --build customer-db invoice-db invoice-adjustment-db payment-db identity-db analytics-db kafka connect kafka-exporter prometheus customer-service invoice-service invoice-adjustment-service payment-service identity-service analytics-service semantic-query-service analytics-portal grafana airflow
+    echo "Waiting for application services..."
+    ready=false
+    for attempt in {1..60}; do
+      if "$0" health >/dev/null 2>&1; then ready=true; break; fi
+      sleep 2
+    done
+    if [[ "$ready" != true ]]; then
+      echo "Application services did not become healthy within 120 seconds." >&2
+      docker compose ps --all >&2
+      docker compose logs --tail=80 customer-service invoice-service invoice-adjustment-service payment-service identity-service analytics-service semantic-query-service >&2
+      exit 1
+    fi
+    echo "All application services are healthy."
+    ;;
+  register-cdc)
+    for attempt in {1..60}; do
+      if "$0" health >/dev/null 2>&1; then break; fi
+      sleep 2
+    done
+    "$0" health >/dev/null || { echo "Application services are not ready; CDC source tables may not exist" >&2; exit 1; }
+    for attempt in {1..60}; do
+      curl --fail --silent http://localhost:8083/connectors >/dev/null && break
+      sleep 2
+    done
+    curl --fail --silent http://localhost:8083/connectors >/dev/null || { echo "Kafka Connect is not ready" >&2; exit 1; }
+    for source in customer invoice invoice-adjustment payment identity; do
+      name="${source}-outbox"
+      if curl --fail --silent "http://localhost:8083/connectors/${name}" >/dev/null; then
+        echo "${name} already registered"
+      else
+        curl --fail --silent --show-error -X POST http://localhost:8083/connectors \
+          -H 'Content-Type: application/json' \
+          --data @"infrastructure/debezium/register-${source}-outbox.json"
+        echo
+      fi
+    done
+    ;;
   generate)
     ready=false
     for attempt in {1..60}; do

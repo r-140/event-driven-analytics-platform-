@@ -12,6 +12,27 @@
 10. Leave generation stopped for more than 10 minutes to demonstrate CDC freshness-SLA breaches, then generate records and show automatic anomaly resolution.
 11. Trigger `dbt_analytics`, then open `http://localhost:8090`. Run Customers by country and Invoice value by month; inspect the semantic request and generated parameterized SQL.
 
+## Check Airflow 3 DAG-run status
+
+Airflow 3 takes the DAG id as a positional argument for `dags list-runs`. It does not support the Airflow 2-style `--dag-id` or `--limit` arguments on this command.
+
+```bash
+docker compose exec airflow airflow dags list-runs dbt_analytics
+docker compose exec airflow airflow dags list-runs platform_health
+```
+
+For machine-readable output and a compact view of the latest runs:
+
+```bash
+docker compose exec airflow airflow dags list-runs dbt_analytics -o json \
+  | jq 'sort_by(.run_after) | reverse | .[:3]'
+
+docker compose exec airflow airflow dags list-runs platform_health -o json \
+  | jq 'sort_by(.run_after) | reverse | .[:3]'
+```
+
+The trigger command initially reports `queued`; wait until the corresponding run becomes `success` before validating the dbt or platform-health dashboards.
+
 Useful database shells:
 
 ```bash
